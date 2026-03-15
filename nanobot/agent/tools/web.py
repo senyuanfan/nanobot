@@ -172,8 +172,7 @@ class WebSearchTool(Tool):
             headers = {"Accept": "application/json", "Authorization": f"Bearer {api_key}"}
             async with httpx.AsyncClient(proxy=self.proxy) as client:
                 r = await client.get(
-                    f"https://s.jina.ai/",
-                    params={"q": query},
+                    f"https://s.jina.ai/{query}",
                     headers=headers,
                     timeout=15.0,
                 )
@@ -185,6 +184,7 @@ class WebSearchTool(Tool):
             ]
             return _format_results(query, items, n)
         except Exception as e:
+            logger.warning("Jina search failed: {}", e)
             return f"Error: {e}"
 
     async def _search_duckduckgo(self, query: str, n: int) -> str:

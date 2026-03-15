@@ -105,7 +105,8 @@ async def test_brave_fallback_to_duckduckgo_when_no_key(monkeypatch):
 @pytest.mark.asyncio
 async def test_jina_search(monkeypatch):
     async def mock_get(self, url, **kw):
-        assert "s.jina.ai" in str(url)
+        url_str = str(url)
+        assert "s.jina.ai/test" in url_str  # query must be in URL path, not params
         assert kw["headers"]["Authorization"] == "Bearer jina-key"
         return _response(json={
             "data": [{"title": "Jina Result", "url": "https://jina.ai", "content": "AI search"}]
@@ -127,15 +128,18 @@ async def test_unknown_provider():
 
 
 @pytest.mark.asyncio
-async def test_default_provider_is_brave(monkeypatch):
-    async def mock_get(self, url, **kw):
-        assert "brave" in url
-        return _response(json={"web": {"results": []}})
+async def test_default_provider_is_duckduckgo(monkeypatch):
+    class MockDDGS:
+        def __init__(self, **kw):
+            pass
 
-    monkeypatch.setattr(httpx.AsyncClient, "get", mock_get)
-    tool = _tool(provider="", api_key="test-key")
+        def text(self, query, max_results=5):
+            return [{"title": "Default", "href": "https://ddg.example", "body": "default provider"}]
+
+    monkeypatch.setattr("ddgs.DDGS", MockDDGS)
+    tool = _tool(provider="")
     result = await tool.execute(query="test")
-    assert "No results" in result
+    assert "Default" in result
 
 
 @pytest.mark.asyncio
