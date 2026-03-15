@@ -189,7 +189,10 @@ class WebSearchTool(Tool):
 
     async def _search_duckduckgo(self, query: str, n: int) -> str:
         try:
-            from ddgs import DDGS
+            try:
+                from ddgs import DDGS
+            except ImportError:
+                from duckduckgo_search import DDGS
 
             ddgs = DDGS(timeout=10)
             raw = await asyncio.to_thread(ddgs.text, query, max_results=n)
